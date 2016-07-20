@@ -13,14 +13,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
@@ -40,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements Constants{
     Button mStartBtn;
     private CmdParam cmdParam = null;
     private Process process = null;
+    private SharedPreferences mSharedPreferences = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements Constants{
                 return true;
             }
         });
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         tryToStart();
         if (BuildConfig.DEBUG) Log.d(TAG, "onCreate");
@@ -64,6 +63,17 @@ public class MainActivity extends AppCompatActivity implements Constants{
     protected void onResume() {
         super.onResume();
         if (BuildConfig.DEBUG) Log.d(TAG, "onResume");
+        Boolean settingChanged = false;
+        settingChanged = mSharedPreferences.getBoolean(SettingChanged, false);
+        if (settingChanged){
+            if (process != null) {
+                killTheKcptun();
+            }
+            tryToStart();
+            SharedPreferences.Editor editor = mSharedPreferences.edit();
+            editor.putBoolean(SettingChanged, false);
+            editor.commit();
+        }
     }
 
     private void tryToStart() {
@@ -88,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements Constants{
                 handleSettingBtnClick();
                 break;
             case R.id.startBtn:
-                handleStartBtnClick();
+                tryToStart();
                 break;
         }
     }
@@ -136,9 +146,6 @@ public class MainActivity extends AppCompatActivity implements Constants{
             mStartBtn.setText(R.string.start);
             mSettingBtn.setEnabled(true);
         }
-
-
-
     }
 
     /**

@@ -5,6 +5,7 @@ package com.shutup.kcptun_android;
  */
 public interface Constants {
     public static final String SettingChanged = "SettingChanged";
+
     public static final String RemoteServerIp = "RemoteServerIp";
     public static final String RemoteServerPort = "RemoteServerPort";
     public static final String LocalServerPort = "LocalServerPort";
