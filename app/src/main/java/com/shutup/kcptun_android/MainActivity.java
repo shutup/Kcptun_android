@@ -4,20 +4,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.squareup.otto.Subscribe;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
@@ -27,7 +29,6 @@ public class MainActivity extends AppCompatActivity implements Constants{
     private static final String TAG = "MainActivity";
     private String kcptun = "kcp_tun";
     private String binary_path = null;
-    private MyHandler mMyHandler = null;
 
     @InjectView(R.id.info)
     TextView mInfo;
@@ -43,16 +44,9 @@ public class MainActivity extends AppCompatActivity implements Constants{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.inject(this);
-        mMyHandler = new MyHandler(Looper.getMainLooper(), new Handler.Callback() {
 
-            @Override
-            public boolean handleMessage(Message msg) {
-                mInfo.append((CharSequence) msg.obj);
-                mInfo.append("\n");
-                return true;
-            }
-        });
+        ButterKnife.inject(this);
+        BusProvider.getInstance().register(this);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         tryToStart();
@@ -76,6 +70,13 @@ public class MainActivity extends AppCompatActivity implements Constants{
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        killTheKcptun();
+        BusProvider.getInstance().unregister(this);
+    }
+
     private void tryToStart() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         cmdParam = new CmdParam();
@@ -88,6 +89,8 @@ public class MainActivity extends AppCompatActivity implements Constants{
         }else {
             cmdParam = null;
             if (BuildConfig.DEBUG) Log.d(TAG, "need more info ");
+            Toast.makeText(this, getString(R.string.no_setting_info), Toast.LENGTH_SHORT).show();
+            BusProvider.getInstance().post(new MessageEvent(getString(R.string.no_setting_info), SET_INFO_CONTENT));
         }
     }
 
@@ -110,16 +113,15 @@ public class MainActivity extends AppCompatActivity implements Constants{
 
     private void handleStartBtnClick() {
         if (mStartBtn.getText().toString().equalsIgnoreCase(getString(R.string.start))){
-            mInfo.setText("");
-            mStartBtn.setText(R.string.stop);
-            mSettingBtn.setEnabled(false);
+            BusProvider.getInstance().post(new MessageEvent("", SET_INFO_CONTENT));
+            BusProvider.getInstance().post(new MessageEvent(getString(R.string.stop),CHANGE_START_BTN_NAME));
+            BusProvider.getInstance().post(new MessageEvent(false,CHANGE_SETTING_BTN_ENABLE));
             String arch = System.getProperty("os.arch");
-            mInfo.append(arch);
-            mInfo.append("\n");
+            if (BuildConfig.DEBUG) Log.d(TAG, arch);
+            BusProvider.getInstance().post(new MessageEvent(getString(R.string.arch_info)+arch, APPEND_INFO_CONTENT));
             int identifier = detectCpuArchInfo();
             binary_path = installBinary(this, identifier, kcptun);
-            mInfo.append(binary_path);
-            mInfo.append("\n");
+//            BusProvider.getInstance().post(new MessageEvent(binary_path, APPEND_INFO_CONTENT));
             if (BuildConfig.DEBUG) Log.d(TAG, binary_path);
 
             new Thread(new Runnable() {
@@ -128,23 +130,23 @@ public class MainActivity extends AppCompatActivity implements Constants{
                     runCmdLine(new ShellCallback() {
                         @Override
                         public void shellOut(String shellLine) {
-                            Message message = mMyHandler.obtainMessage();
-                            message.obj = shellLine;
-                            message.what = 1;
-                            mMyHandler.sendMessage(message);
+                            BusProvider.getInstance().post(new MessageEvent(shellLine, APPEND_INFO_CONTENT));
                         }
 
                         @Override
                         public void processComplete(int exitValue) {
-
+                            if (BuildConfig.DEBUG) Log.d(TAG, "exitValue:" + exitValue);
+                            //restore
+                            BusProvider.getInstance().post(new MessageEvent(getString(R.string.start),CHANGE_START_BTN_NAME));
+                            BusProvider.getInstance().post(new MessageEvent(true,CHANGE_SETTING_BTN_ENABLE));
                         }
                     });
                 }
             }).start();
         }else if (mStartBtn.getText().toString().equalsIgnoreCase(getString(R.string.stop))) {
             killTheKcptun();
-            mStartBtn.setText(R.string.start);
-            mSettingBtn.setEnabled(true);
+            BusProvider.getInstance().post(new MessageEvent(getString(R.string.start),CHANGE_START_BTN_NAME));
+            BusProvider.getInstance().post(new MessageEvent(true,CHANGE_SETTING_BTN_ENABLE));
         }
     }
 
@@ -222,13 +224,7 @@ public class MainActivity extends AppCompatActivity implements Constants{
         }
         final String cmd = setup_cmd(binary_path, cmdParam);
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mInfo.append(cmd);
-                mInfo.append("\n");
-            }
-        });
+        BusProvider.getInstance().post(new MessageEvent(cmd,APPEND_INFO_CONTENT));
 
         process = null;
         try {
@@ -298,9 +294,9 @@ public class MainActivity extends AppCompatActivity implements Constants{
                 int retVal = process.waitFor();
                 if (BuildConfig.DEBUG) Log.d(TAG, "retVal:" + retVal);
                 if (retVal == 9) {
-                    mInfo.setText(R.string.stop_kcp_tun_normal);
+                    BusProvider.getInstance().post(new MessageEvent(getString(R.string.stop_kcp_tun_normal),SET_INFO_CONTENT));
                 }else{
-                    mInfo.setText(R.string.stop_kcp_tun_exception);
+                    BusProvider.getInstance().post(new MessageEvent(getString(R.string.stop_kcp_tun_exception),SET_INFO_CONTENT));
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -308,9 +304,45 @@ public class MainActivity extends AppCompatActivity implements Constants{
         }
     }
 
-    private class MyHandler extends Handler {
-        public MyHandler(Looper looper, Callback callback) {
-            super(looper, callback);
-        }
+    @Subscribe
+    public void handleInfoContentChange(final MessageEvent messageEvent) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (messageEvent.getType() == SET_INFO_CONTENT) {
+                    mInfo.setText(messageEvent.getMsg());
+                }else if (messageEvent.getType() == APPEND_INFO_CONTENT){
+                    mInfo.append(messageEvent.getMsg()+"\n");
+                }
+            }
+        });
     }
+
+    @Subscribe
+    public void handleBtnName(final MessageEvent messageEvent) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (messageEvent.getType() == CHANGE_START_BTN_NAME) {
+                    mStartBtn.setText(messageEvent.getMsg());
+                }
+            }
+        });
+    }
+
+    @Subscribe
+    public void handleBtnEnable(final MessageEvent messageEvent) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (messageEvent.getType() == CHANGE_START_BTN_ENABLE) {
+                    mStartBtn.setEnabled(messageEvent.isEnable());
+                }else if (messageEvent.getType() == CHANGE_SETTING_BTN_ENABLE) {
+                    mSettingBtn.setEnabled(messageEvent.isEnable());
+                }
+            }
+        });
+    }
+
+
 }

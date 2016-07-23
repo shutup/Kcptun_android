@@ -12,4 +12,6 @@
     <string name="remote_server_key">远程服务器密码</string>
     <string name="remote_server_port">远程服务器端口</string>
     <string name="server_mode">服务器运行模式</string>
+    <string name="no_setting_info">请先进行服务器配置</string>
+    <string name="arch_info">运行平台架构:</string>
 </resources>

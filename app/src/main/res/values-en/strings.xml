@@ -12,4 +12,6 @@
     <string name="setting">Setting</string>
     <string name="stop_kcp_tun_exception">Kcptun Stop With Exception!</string>
     <string name="stop_kcp_tun_normal">Kcptun Stop With Normal!</string>
+    <string name="no_setting_info">please setting the app first</string>
+    <string name="arch_info">"Current Platform Arch: "</string>
 </resources>
