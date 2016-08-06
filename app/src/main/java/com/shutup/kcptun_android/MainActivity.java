@@ -3,6 +3,8 @@ package com.shutup.kcptun_android;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -179,18 +181,33 @@ public class MainActivity extends AppCompatActivity implements Constants{
      * @param filename
      * @return
      */
-    private static String installBinary(Context ctx, int resId, String filename) {
+    private  String installBinary(Context ctx, int resId, String filename) {
         try {
             File f = new File(ctx.getDir("bin", 0), filename);
             if (f.exists()) {
-
+                handleKcptunUpdate(ctx, resId, f);
             } else {
-                copyRawFile(ctx, resId, f, "0755");
+                handleKcptunUpdate(ctx, resId, f);
             }
             return f.getCanonicalPath();
         } catch (Exception e) {
             Log.e(TAG, "installBinary failed: " + e.getLocalizedMessage());
             return null;
+        }
+    }
+
+    private void handleKcptunUpdate(Context ctx, int resId, File f) throws PackageManager.NameNotFoundException, IOException, InterruptedException {
+        PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+        int currentVersionCode = pInfo.versionCode;
+        int localVersionCode = mSharedPreferences.getInt(AppVersionCode,0);
+        if (localVersionCode < currentVersionCode) {
+            copyRawFile(ctx,resId,f,"0755");
+            SharedPreferences.Editor editor = mSharedPreferences.edit();
+            editor.putInt(AppVersionCode,currentVersionCode);
+            editor.commit();
+        }
+        else{
+            if (BuildConfig.DEBUG) Log.d(TAG, "no update");
         }
     }
 
