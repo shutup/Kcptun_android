@@ -2,8 +2,8 @@
 #项目说明
 这是一个在安卓平台图形化配置并运行kcptun服务的应用，实现代理功能需要配合ShadowSocks使用。
 
-#预编译安装包
-[20160726v0.1 下载](https://github.com/shutup/Kcptun_android/releases/tag/v0.1)
+#预编译安装包latest
+[预编译安装包latest 下载](https://github.com/shutup/Kcptun_android/releases/latest)
 
 #原理图
 ![logic](https://github.com/shutup/Kcptun_android/blob/master/logic.png "logic")
