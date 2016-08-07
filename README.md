@@ -1,6 +1,8 @@
 # Kcptun_android
 #项目说明
 这是一个在安卓平台图形化配置并运行kcptun服务的应用，实现代理功能需要配合ShadowSocks使用。
+#说明
+目前[shadowsocks-android](https://github.com/shadowsocks/shadowsocks-android/releases)已经在最新版本中添加了kcptun的支持，大家可以直接使用kcptun了。
 
 #预编译安装包latest
 [预编译安装包latest 下载](https://github.com/shutup/Kcptun_android/releases/latest)
@@ -25,4 +27,5 @@
 
 #感谢
 [KcpTun项目](https://github.com/xtaci/kcptun)
+
 
