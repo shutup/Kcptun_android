@@ -116,12 +116,16 @@ public class MainActivity extends AppCompatActivity implements Constants{
     private void handleStartBtnClick() {
         if (mStartBtn.getText().toString().equalsIgnoreCase(getString(R.string.start))){
             BusProvider.getInstance().post(new MessageEvent("", SET_INFO_CONTENT));
-            BusProvider.getInstance().post(new MessageEvent(getString(R.string.stop),CHANGE_START_BTN_NAME));
-            BusProvider.getInstance().post(new MessageEvent(false,CHANGE_SETTING_BTN_ENABLE));
             String arch = System.getProperty("os.arch");
             if (BuildConfig.DEBUG) Log.d(TAG, arch);
             BusProvider.getInstance().post(new MessageEvent(getString(R.string.arch_info)+arch, APPEND_INFO_CONTENT));
             int identifier = detectCpuArchInfo();
+            if (identifier == 0){
+                Toast.makeText(this, R.string.detect_cpu_info_error, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            BusProvider.getInstance().post(new MessageEvent(getString(R.string.stop),CHANGE_START_BTN_NAME));
+            BusProvider.getInstance().post(new MessageEvent(false,CHANGE_SETTING_BTN_ENABLE));
             binary_path = installBinary(this, identifier, kcptun);
 //            BusProvider.getInstance().post(new MessageEvent(binary_path, APPEND_INFO_CONTENT));
             if (BuildConfig.DEBUG) Log.d(TAG, binary_path);
@@ -160,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements Constants{
     private int detectCpuArchInfo() {
         String arch = System.getProperty("os.arch");
         int identifierId = 0;
+        arch = arch == null ? "" : arch;
         if (arch.contains("arm")) {
             if (arch.contains("v7")) {
                 identifierId = getResources().getIdentifier("client_linux_arm7", "raw", getPackageName());
@@ -237,6 +242,9 @@ public class MainActivity extends AppCompatActivity implements Constants{
         if (cmdParam == null){
 //            Toast.makeText(this, "Please Fill The Setting First", Toast.LENGTH_SHORT).show();
             if (BuildConfig.DEBUG) Log.d(TAG, "Please Fill The Setting First");
+            return -1;
+        }
+        if (binary_path == null) {
             return -1;
         }
         final String cmd = setup_cmd(binary_path, cmdParam);
