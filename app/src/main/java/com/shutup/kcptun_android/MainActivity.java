@@ -173,6 +173,9 @@ public class MainActivity extends AppCompatActivity implements Constants{
             } else if (arch.contains("v5")) {
                 identifierId = getResources().getIdentifier("client_linux_arm5", "raw", getPackageName());
             }
+        }else if (arch.contains("arch64")) {
+            //目前采取兼容模式
+            identifierId = getResources().getIdentifier("client_linux_arm7", "raw", getPackageName());
         }
         if (BuildConfig.DEBUG) Log.d(TAG, "identifierId:" + identifierId);
         return identifierId;
