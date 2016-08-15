@@ -25,6 +25,10 @@
 * 第一次运行时先进行服务器信息配置，配置信息将会保留
 * 以后启动APP时会先检查已有配置，进行连接尝试
 
+##捐赠项目
+有钱的捧个钱场，没钱的捧个人场！
+![zhifubao](https://github.com/shutup/DailyEarth/blob/master/zhifubao.jpg)
+
 #感谢
 [KcpTun项目](https://github.com/xtaci/kcptun)
 
