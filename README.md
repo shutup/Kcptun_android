@@ -27,7 +27,7 @@
 
 ##捐赠项目
 有钱的捧个钱场，没钱的捧个人场！
-![zhifubao](https://github.com/shutup/DailyEarth/blob/master/zhifubao.jpg)
+![zhifubao](https://github.com/shutup/DailyEarth/blob/master/zhifubao.png)
 
 #感谢
 [KcpTun项目](https://github.com/xtaci/kcptun)
